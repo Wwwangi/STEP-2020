@@ -71,27 +71,42 @@ def anagram_with_best_score(anagram):
         i+=2
     score.append((temp+1)**2)
   res=anagram[score.index(max(score))]
-  print('The anagram with the highest score is: '+ res)
-  print('The score is: '+ str(max(score)))
-  return res
+  #print('The anagram with the highest score is: '+ res)
+  #print('The score is: '+ str(max(score)))
+  return [res,max(score)]
 
 #automation
 from bs4 import BeautifulSoup
 from selenium import webdriver
-driver = webdriver.Chrome()
-driver.get('https://icanhazwordz.appspot.com/')
-for i in range(10):
-  #to get the characters on the website for each round
-  string=[]
-  bs = BeautifulSoup(driver.page_source, "html.parser")
-  char = bs.findAll('div',{'class':['letter p1','letter p2','letter p3']})
-  for c in char:  
-    string.append(c.string.lower())
-  anagram=all_anagram(string,sorted_dic)
-  if anagram:
-    chosen_anagram=anagram_with_best_score(anagram)
-    print(chosen_anagram)
-    driver.find_element_by_id('MoveField').send_keys(chosen_anagram)
-    driver.find_element_by_xpath("//input[@value='Submit']").click()
+while True:
+  driver = webdriver.Chrome()
+  driver.get('https://icanhazwordz.appspot.com/')
+  total_score=0
+  for i in range(10):
+    #to get the characters on the website for each round
+    string=[]
+    bs = BeautifulSoup(driver.page_source, "html.parser")
+    char = bs.findAll('div',{'class':['letter p1','letter p2','letter p3']})
+    for c in char:  
+      string.append(c.string.lower())
+    anagram=all_anagram(string,sorted_dic)
+    if anagram:
+      chosen_anagram,temp=anagram_with_best_score(anagram)
+      total_score+=temp
+      print(chosen_anagram,temp,total_score)
+      driver.find_element_by_id('MoveField').send_keys(chosen_anagram)
+      driver.find_element_by_xpath("//input[@value='Submit']").click()
+    else:
+  	  driver.find_element_by_name('pass').click()
+
+  #Record name
+  if total_score>1835:
+  	driver.find_element_by_xpath("//input[@name='NickName']").send_keys('Wanqi Wu')
+  	driver.find_element_by_xpath("//input[@name='URL']").send_keys('https://github.com/Wwwangi/STEP-2020/blob/master/HOMEWORK1/anagram_auto.py')
+  	driver.find_element_by_xpath("//input[@id='AgentRobot']").click()
+  	driver.find_element_by_xpath("//input[@name='Name']").send_keys('Wanqi Wu')
+  	driver.find_element_by_xpath("//input[@name='Email']").send_keys('wwwangi@moegi.waseda.jp')
+  	driver.find_element_by_xpath("//input[@value='Record!']").click()
+  	break
   else:
-  	driver.find_element_by_name('pass').click()
+  	driver.close()
