@@ -1,4 +1,4 @@
-def readNumber(line, index, neg):
+def read_number(line, index, neg):
   number = 0
   #Deal with integer part
   while index < len(line) and line[index].isdigit():
@@ -18,7 +18,7 @@ def readNumber(line, index, neg):
   token = {'type': 'NUMBER', 'number': number}
   return token, index, neg
 
-def readOperator(line,index):
+def read_operator(line,index):
   operator=line[index]
   if(operator=='+'):
     token = {'type': '+'}
@@ -42,7 +42,7 @@ def tokenize(line):
   prev = ''
   while index < len(line):
     if line[index].isdigit():
-      (token, index, neg) = readNumber(line, index, neg)
+      (token, index, neg) = read_number(line, index, neg)
       prev = 'number'
     elif line[index] == '-' and (prev == '' or prev in set(['+','-','*','/','('])):
       neg = True
@@ -50,7 +50,7 @@ def tokenize(line):
       continue
     elif line[index] in set(['+','-','*','/','(',')']):
       prev = line[index]
-      (token, index) = readOperator(line, index)
+      (token, index) = read_operator(line, index)
     else:
       print('Invalid character found: ' + line[index])
       exit(1)
@@ -58,7 +58,7 @@ def tokenize(line):
   return tokens
 
 #Change a infix expression to the suffix expression for later calculation
-def InfixToSuffixExpression(tokens):
+def Infix_To_Suffix_Expression(tokens):
   #Record the operation priority i.e. '()' > */' > '+-'
   Priority={'+':0,'-':0,'*':1,'/':1,'(':2,')':2}
   #a stack that stores the operators
@@ -99,7 +99,7 @@ def InfixToSuffixExpression(tokens):
 
 #Calculate using suffix expression
 def evaluate(tokens):
-  tokens=InfixToSuffixExpression(tokens)
+  tokens=Infix_To_Suffix_Expression(tokens)
   answer_stack=[]
   operators=set(['+','-','*','/'])
   for token in tokens:
@@ -126,12 +126,12 @@ def evaluate(tokens):
 
 def test(line):
   tokens = tokenize(line)
-  actualAnswer = evaluate(tokens)
-  expectedAnswer = eval(line)
-  if abs(actualAnswer - expectedAnswer) < 1e-8:
-    print("PASS! (%s = %f)" % (line, expectedAnswer))
+  actual_answer = evaluate(tokens)
+  expected_answer = eval(line)
+  if abs(actual_answer - expected_answer) < 1e-8:
+    print("PASS! (%s = %f)" % (line, expected_answer))
   else:
-    print("FAIL! (%s should be %f but was %f)" % (line, expectedAnswer, actualAnswer))
+    print("FAIL! (%s should be %f but was %f)" % (line, expectedAnswer, actual_answer))
 
 #Some test cases
 def runTest():
