@@ -191,7 +191,8 @@ void* my_malloc(size_t size) {
       else{
         if(metadata->size - size < difference){ //update when a closer size slot is found
           temp_prev = prev;
-          temp=metadata;          
+          temp=metadata;
+          difference = metadata->size - size;          
         }
       }
     }
