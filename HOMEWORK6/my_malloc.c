@@ -250,36 +250,6 @@ void* my_malloc(size_t size) {
 // any library functions other than mmap_from_system / munmap_to_system.
 void my_free(void* ptr) {
   simple_free(ptr);
-  // // Look up the metadata. The metadata is placed just prior to the object.
-  // //
-  // // ... | metadata | object | ...
-  // //     ^          ^
-  // //     metadata   ptr
-  // simple_metadata_t* metadata = (simple_metadata_t*)ptr - 1;
-  // // Add the free slot to the free list.
-  // simple_add_to_free_list(metadata);
-
-  // //Merge the continuous empty blocks 
-  // unsigned long hd1, hd2;
-  // simple_metadata_t* hd = simple_heap.free_head;
-  // simple_metadata_t* prev = NULL;
-  // while (hd && hd -> next){
-  //   hd1 = (unsigned long)hd;
-  //   hd2 = (unsigned long)hd->next;
-  //    if(hd1 + sizeof(simple_metadata_t) + hd->size == hd2){
-  //      hd->size += hd->next->size + sizeof(simple_metadata_t);
-  //      hd->next = hd->next->next;
-  //      if(!hd->next){
-  //       break;
-  //      }
-  //    }
-  //    prev = hd;
-  //    hd= hd->next;
-  // }
-
-  // munmap(hd, sizeof(hd->size));
-
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
