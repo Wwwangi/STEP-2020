@@ -225,7 +225,7 @@ void* my_malloc(size_t size) {
     // Add the memory region to the free list.
     simple_add_to_free_list(metadata);
     // Now, try simple_malloc() again. This should succeed.
-    return simple_malloc(size);
+    return my_malloc(size);
   }
 
   // |ptr| is the beginning of the allocated object.
