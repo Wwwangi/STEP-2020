@@ -10,6 +10,8 @@
 void* mmap_from_system(size_t size);
 void munmap_to_system(void* ptr, size_t size);
 
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 //
@@ -55,6 +57,30 @@ void simple_add_to_free_list(simple_metadata_t* metadata) {
   assert(!metadata->next);
   metadata->next = simple_heap.free_head;
   simple_heap.free_head = metadata;
+}
+
+//Add a free slot to the free list in ascending order, so that we could do merge later
+void my_add_to_free_list(simple_metadata_t* metadata) {
+  assert(!metadata->next);
+
+  simple_metadata_t* curr = simple_heap.free_head;
+  simple_metadata_t* prev = NULL;
+
+  while(curr && curr!=&simple_heap.dummy){
+    if(metadata < curr){
+      break;
+    }
+    prev = curr;
+    curr = curr->next;
+  }
+
+  if(prev){
+    prev->next=metadata;
+  }
+  else{
+    simple_heap.free_head=metadata;
+  }
+  metadata->next=curr;
 }
 
 // Remove a free slot from the free list.
@@ -224,7 +250,7 @@ void* my_malloc(size_t size) {
     metadata->size = buffer_size - sizeof(simple_metadata_t);
     metadata->next = NULL;
     // Add the memory region to the free list.
-    simple_add_to_free_list(metadata);
+    my_add_to_free_list(metadata);
     // Now, try simple_malloc() again. This should succeed.
     return my_malloc(size);
   }
@@ -252,7 +278,7 @@ void* my_malloc(size_t size) {
     new_metadata->size = remaining_size - sizeof(simple_metadata_t);
     new_metadata->next = NULL;
     // Add the remaining free slot to the free list.
-    simple_add_to_free_list(new_metadata);
+    my_add_to_free_list(new_metadata);
   }
   return ptr;
 }
@@ -260,7 +286,32 @@ void* my_malloc(size_t size) {
 // This is called every time an object is freed.  You are not allowed to use
 // any library functions other than mmap_from_system / munmap_to_system.
 void my_free(void* ptr) {
-  simple_free(ptr);
+  simple_metadata_t* metadata = (simple_metadata_t*)ptr - 1;
+  my_add_to_free_list(metadata);
+
+  //Do merge if the next slot after metadata is also free
+  if(metadata->next){
+    unsigned long start,end;
+    simple_metadata_t* after = metadata->next;
+    start = (unsigned long)metadata;
+    end = (unsigned long)after;
+    if(start + sizeof(simple_metadata_t)+metadata->size  == end){
+      metadata->size += after->size + sizeof(simple_metadata_t);
+      metadata->next = after->next;
+    }
+  }
+
+
+  // //release memory by using munmap
+  // end = (unsigned long)current;
+  // if(current->size >= 4096){
+  //   printf("found");  //seems that the "release" does not work
+  //   simple_remove_from_free_list(current, prev);
+  //   munmap_to_system(current, 4096);
+  // }
+
+
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -272,17 +323,24 @@ void my_free(void* ptr) {
 
 void test() {
   my_initialize();
-  for (int i = 0; i < 100; i++) {
-    void* ptr = my_malloc(96);
-    my_free(ptr);
+  // for (int i = 0; i < 100; i++) {
+  //   void* ptr = my_malloc(96);
+  //   my_free(ptr);
+  // }
+  void* ptrs[10];
+  for (int i = 0; i < 10; i++) {
+    ptrs[i] = my_malloc(i+1);
+    //printf("%p\n",ptrs[i]);
   }
-  void* ptrs[100];
-  for (int i = 0; i < 100; i++) {
-    ptrs[i] = my_malloc(96);
-  }
-  for (int i = 0; i < 100; i++) {
-    my_free(ptrs[i]);
-  }
+
+  my_free(ptrs[7]);
+  my_free(ptrs[4]);
+  my_free(ptrs[3]);
+  my_free(ptrs[6]);
+
+  // for (int i = 0; i < 100; i++) {
+  //   my_free(ptrs[i]);
+  // }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
