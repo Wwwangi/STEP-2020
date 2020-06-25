@@ -272,20 +272,50 @@ void* my_malloc(size_t size) {
   return ptr;
 }
 
-// void release(){
-//   simple_metadata_t* metadata = simple_heap.free_head;
-//   simple_metadata_t* prev = NULL;
+//Release pages to memory, but adding this part will decrease the memory utilization for challenge 4&5
+void release(){
+  simple_metadata_t* metadata = simple_heap.free_head;
+  simple_metadata_t* prev = NULL;
+  size_t page_size = 4096;
+  int det=0;
 
-//   while(metadata){
-//     if(sizeof(simple_metadata_t)+metadata->size % 4096 == 0){
-//       printf("Found\n");
-//       simple_remove_from_free_list(metadata, prev);
-//       munmap_to_system(metadata, metadata->size);
-//     }
-//     prev=metadata;
-//     metadata=metadata->next;
-//   }
-// }
+  //Loop through every free-slot, do munmap if its size >= 4096
+  while(metadata->next){
+    det=0;
+    size_t temp = sizeof(simple_metadata_t)+metadata->size;
+    void *ptr = metadata;
+    if(temp >= page_size){
+      // |ptr| and |size| need to be a multiple of 4096 bytes
+      if(temp%page_size==0 && (uintptr_t)ptr % page_size==0){
+        det=1;
+        if (prev) {
+          prev->next = metadata->next;
+          metadata=metadata->next;  //update metadata here because prev should remain the same
+        } else {
+          simple_heap.free_head = metadata->next;
+          metadata=metadata->next;  //update metadata here because prev should remain the same
+        }
+        munmap_to_system(ptr, temp);
+      }
+      else{
+        size_t k = temp/page_size;
+        size_t remaining_size = temp - k*page_size;
+        if(remaining_size > sizeof(simple_metadata_t)){
+          metadata->size = remaining_size - sizeof(simple_metadata_t);
+          void *new_position = ((char *)(metadata + 1) + metadata->size);
+          if((uintptr_t)new_position % page_size == 0){
+
+            munmap_to_system(new_position, k*page_size);
+          }
+        }
+      }
+    }
+    if(det==0){
+      prev=metadata;
+      metadata=metadata->next;
+    }
+  }
+}
 
 // This is called every time an object is freed.  You are not allowed to use
 // any library functions other than mmap_from_system / munmap_to_system.
@@ -309,7 +339,7 @@ void my_free(void* ptr) {
     }
   }
 
-  //release();
+  release();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
